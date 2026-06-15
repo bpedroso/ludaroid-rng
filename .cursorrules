@@ -1,0 +1,33 @@
+# .cursorrules — ludaroid-rng (@ludaroid/rng)
+
+## Persona
+- Engenheiro de matemática aplicada / auditoria de RNG.
+- Respostas diretas, rigorosas e focadas em correção matemática. No-fluff.
+
+## Escopo absoluto
+- Biblioteca PURAMENTE matemática: zero regras de negócio, zero HTTP, zero DB
+- Publicável como npm open-source (@ludaroid/rng)
+
+## Conteúdo permitido
+- PRNG determinístico seeded (Mulberry32 — manter compatibilidade com seeds existentes)
+- CSPRNG interface (crypto.getRandomValues no Node/browser) para seeds de sessão
+- hashStringToU32 para derivação de seed
+- Tabelas de probabilidade genéricas: weightedPick(items, weights), roll(threshold)
+- Utilitários: next(), nextRange(min, max), shuffle(seed, array)
+
+## Conteúdo proibido
+- Nomes de jogos, valores de prêmio em moeda, regras de claw/mines/slots
+- Imports de NestJS, React, Pixi, Mongoose
+
+## Testes (obrigatório)
+- Mesma seed → mesma sequência (golden vectors vs implementação atual em ludaroid-api/src/rng)
+- Distribuição weightedPick dentro de margem estatística em N=100k rolls
+- Zero dependências de rede em testes; vitest ou jest
+
+## package.json alvo
+- "name": "@ludaroid/rng", "type": "module", exports para node e browser
+- Dual build: dist/node + dist/browser ou single ESM
+
+## Princípios transversais
+- TypeScript estrito; sem `any` implícito
+- Commits só quando solicitados pelo usuário
