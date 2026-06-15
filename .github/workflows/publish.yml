@@ -75,12 +75,20 @@ jobs:
           generate_release_notes: true
 
       - name: Publish to GitHub Packages
+        if: github.repository_owner == 'ludaroid'
         run: |
           echo "@ludaroid:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
           pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: GitHub Packages skipped (scope @ludaroid)
+        if: github.repository_owner != 'ludaroid'
+        run: |
+          echo "GitHub Packages não publicado: o scope @ludaroid exige a org GitHub 'ludaroid'."
+          echo "O pacote está disponível na Release deste workflow (tarball, sem chave)."
+          echo "Para usar o registry: crie a org ludaroid ou use o tarball da Release."
 
       - name: Publish to npmjs.com
         if: github.event_name == 'workflow_dispatch' && inputs.publish_npmjs
