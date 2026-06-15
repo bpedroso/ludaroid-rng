@@ -56,14 +56,16 @@ cd ludaroid-api && pnpm install
 
 ### Opção B — GitHub Release (recomendado hoje)
 
-Após publicar uma tag (`v0.1.0`), o workflow anexa um `.tgz` na [Release](https://github.com/bpedroso/ludaroid-rng/releases).
+Cada push em `main` dispara o workflow **Publish**, que cria uma [Release](https://github.com/bpedroso/ludaroid-rng/releases) identificada pelo commit (`commit-abc1234`) e anexa o `.tgz`.
+
+A versão do pacote segue o commit: `0.0.0-abc1234` (7 primeiros caracteres do SHA).
 
 **`package.json`:**
 
 ```json
 {
   "dependencies": {
-    "@ludaroid/rng": "https://github.com/bpedroso/ludaroid-rng/releases/download/v0.1.0/ludaroid-rng-0.1.0.tgz"
+    "@ludaroid/rng": "https://github.com/bpedroso/ludaroid-rng/releases/download/commit-abc1234/ludaroid-rng-0.0.0-abc1234.tgz"
   }
 }
 ```
@@ -71,14 +73,14 @@ Após publicar uma tag (`v0.1.0`), o workflow anexa um `.tgz` na [Release](https
 **CLI:**
 
 ```bash
-pnpm add https://github.com/bpedroso/ludaroid-rng/releases/download/v0.1.0/ludaroid-rng-0.1.0.tgz
+pnpm add https://github.com/bpedroso/ludaroid-rng/releases/download/commit-abc1234/ludaroid-rng-0.0.0-abc1234.tgz
 ```
 
 ```bash
-npm install https://github.com/bpedroso/ludaroid-rng/releases/download/v0.1.0/ludaroid-rng-0.1.0.tgz
+npm install https://github.com/bpedroso/ludaroid-rng/releases/download/commit-abc1234/ludaroid-rng-0.0.0-abc1234.tgz
 ```
 
-Troque `v0.1.0` pela versão desejada. O nome do arquivo segue o padrão `ludaroid-rng-{version}.tgz`.
+Troque `abc1234` pelo SHA curto do commit desejado (veja na Release ou em `git rev-parse --short HEAD`).
 
 ---
 
@@ -200,16 +202,17 @@ O build Vite/Node resolve ESM via campo `exports` do pacote.
 
 ## Publicar nova versão
 
-1. Atualize `version` em `package.json`
-2. Commit, tag e push:
+Não é necessário tag semver nem bump manual em `package.json`.
+
+1. Commit e push em `main`:
 
 ```bash
-git tag v0.1.0
 git push origin main
-git push origin v0.1.0
 ```
 
-O workflow **Publish** executa testes, build, cria a GitHub Release com o `.tgz` e publica no GitHub Packages (se org `ludaroid`) ou no npmjs (se `NPM_TOKEN` + `PUBLISH_NPMJS=true`).
+O workflow **Publish** usa o SHA do commit como referência (`0.0.0-<sha>`), cria a GitHub Release `commit-<sha>` com o `.tgz` e publica no GitHub Packages.
+
+Para npmjs.com, dispare manualmente **Actions → Publish → Run workflow** com `publish_npmjs: true` (requer secret `NPM_TOKEN`).
 
 ---
 

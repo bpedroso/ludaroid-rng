@@ -2,8 +2,7 @@ name: Publish
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [main]
   workflow_dispatch:
     inputs:
       publish_npmjs:
@@ -19,6 +18,10 @@ permissions:
   contents: write
   packages: write
 
+concurrency:
+  group: publish-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -32,20 +35,21 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Validate tag matches package.json version
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "Tag v$TAG_VERSION does not match package.json version $PKG_VERSION"
-            exit 1
-          fi
-
       - run: pnpm install --frozen-lockfile
       - run: pnpm run typecheck
       - run: pnpm test
       - run: pnpm run build
+
+      - name: Set version from commit
+        id: version
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          VERSION="0.0.0-${SHORT_SHA}"
+          TAG="commit-${SHORT_SHA}"
+          npm version "${VERSION}" --no-git-tag-version --allow-same-version
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Pack tarball
         run: |
@@ -60,14 +64,17 @@ jobs:
           echo "name=$(basename "$FILE")" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: commit ${{ steps.version.outputs.short_sha }}
+          body: |
+            Publicado automaticamente a partir do commit [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
+            Versão do pacote: `${{ steps.version.outputs.version }}`
           files: ${{ steps.tarball.outputs.path }}
           generate_release_notes: true
 
       - name: Publish to GitHub Packages
-        if: github.repository_owner == 'ludaroid'
         run: |
           echo "@ludaroid:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
@@ -75,16 +82,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Note — GitHub Packages skipped
-        if: github.repository_owner != 'ludaroid'
-        run: |
-          echo "GitHub Packages skipped: scope @ludaroid requires GitHub org 'ludaroid'."
-          echo "Use o tarball da Release ou npmjs.com — ver README.md."
-
       - name: Publish to npmjs.com
-        if: >-
-          (startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH_NPMJS == 'true') ||
-          (github.event_name == 'workflow_dispatch' && inputs.publish_npmjs)
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_npmjs
         run: pnpm publish --no-git-checks --access public --registry https://registry.npmjs.org
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
