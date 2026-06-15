@@ -56,7 +56,7 @@ cd ludaroid-api && pnpm install
 
 ### Opção B — GitHub Release (recomendado hoje)
 
-Cada push em `main` dispara o workflow **Publish**, que cria uma [Release](https://github.com/bpedroso/ludaroid-rng/releases) identificada pelo commit (`commit-abc1234`) e anexa o `.tgz`.
+Cada push em `main` dispara o **CI**; se passar, o workflow **Publish** roda em seguida e cria uma [Release](https://github.com/bpedroso/ludaroid-rng/releases) identificada pelo commit (`commit-abc1234`) com o `.tgz`.
 
 A versão do pacote segue o commit: `0.0.0-abc1234` (7 primeiros caracteres do SHA).
 
@@ -210,7 +210,7 @@ Não é necessário tag semver nem bump manual em `package.json`.
 git push origin main
 ```
 
-O workflow **Publish** usa o SHA do commit como referência (`0.0.0-<sha>`), cria a GitHub Release `commit-<sha>` com o `.tgz` e publica no GitHub Packages.
+O workflow **CI** valida o commit; se passar, o workflow **Publish** roda em seguida, cria a Release `commit-<sha>` com o `.tgz` e tenta publicar no GitHub Packages (somente com org `ludaroid`).
 
 Para npmjs.com, dispare manualmente **Actions → Publish → Run workflow** com `publish_npmjs: true` (requer secret `NPM_TOKEN`).
 

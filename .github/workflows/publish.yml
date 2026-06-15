@@ -1,7 +1,9 @@
 name: Publish
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -17,16 +19,22 @@ env:
 permissions:
   contents: write
   packages: write
+  actions: read
 
 concurrency:
-  group: publish-${{ github.workflow }}-${{ github.ref }}
+  group: publish-${{ github.workflow }}-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   publish:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - uses: pnpm/action-setup@v6
 
@@ -36,14 +44,21 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run typecheck
-      - run: pnpm test
+
+      - name: Validate (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          pnpm run typecheck
+          pnpm test
+
       - run: pnpm run build
 
       - name: Set version from commit
         id: version
+        env:
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
-          SHORT_SHA="${GITHUB_SHA::7}"
+          SHORT_SHA="${COMMIT_SHA::7}"
           VERSION="0.0.0-${SHORT_SHA}"
           TAG="commit-${SHORT_SHA}"
           npm version "${VERSION}" --no-git-tag-version --allow-same-version
@@ -69,7 +84,7 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           name: commit ${{ steps.version.outputs.short_sha }}
           body: |
-            Publicado automaticamente a partir do commit [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
+            Publicado automaticamente após CI bem-sucedido no commit [`${{ github.event.workflow_run.head_sha || github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.event.workflow_run.head_sha || github.sha }}).
             Versão do pacote: `${{ steps.version.outputs.version }}`
           files: ${{ steps.tarball.outputs.path }}
           generate_release_notes: true
