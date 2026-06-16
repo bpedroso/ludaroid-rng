@@ -58,14 +58,14 @@ cd ludaroid-api && pnpm install
 
 Cada push em `main` dispara o **CI**; se passar, o workflow **Publish** roda em seguida e cria uma [Release](https://github.com/bpedroso/ludaroid-rng/releases) identificada pelo commit (`commit-abc1234`) com o `.tgz`.
 
-A versão do pacote segue o commit: `0.0.0-abc1234` (7 primeiros caracteres do SHA).
+A versão do pacote segue o commit: `abc1234` (7 primeiros caracteres do SHA).
 
 **`package.json`:**
 
 ```json
 {
   "dependencies": {
-    "@ludaroid/rng": "https://github.com/bpedroso/ludaroid-rng/releases/download/commit-abc1234/ludaroid-rng-0.0.0-abc1234.tgz"
+    "@ludaroid/rng": "https://github.com/bpedroso/ludaroid-rng/releases/download/commit-abc1234/ludaroid-rng-abc1234.tgz"
   }
 }
 ```
@@ -73,11 +73,11 @@ A versão do pacote segue o commit: `0.0.0-abc1234` (7 primeiros caracteres do S
 **CLI:**
 
 ```bash
-pnpm add https://github.com/bpedroso/ludaroid-rng/releases/download/commit-abc1234/ludaroid-rng-0.0.0-abc1234.tgz
+pnpm add https://github.com/bpedroso/ludaroid-rng/releases/download/commit-abc1234/ludaroid-rng-abc1234.tgz
 ```
 
 ```bash
-npm install https://github.com/bpedroso/ludaroid-rng/releases/download/commit-abc1234/ludaroid-rng-0.0.0-abc1234.tgz
+npm install https://github.com/bpedroso/ludaroid-rng/releases/download/commit-abc1234/ludaroid-rng-abc1234.tgz
 ```
 
 Troque `abc1234` pelo SHA curto do commit desejado (veja na Release ou em `git rev-parse --short HEAD`).
